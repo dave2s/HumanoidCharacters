@@ -38,6 +38,7 @@ import org.terasology.logic.console.commandSystem.annotations.Command;
 import org.terasology.logic.console.commandSystem.annotations.Sender;
 import org.terasology.logic.location.LocationComponent;
 import org.terasology.logic.players.LocalPlayer;
+import org.terasology.logic.players.RemotePersonHeldItemMountPointComponent;
 import org.terasology.math.geom.Vector3f;
 import org.terasology.registry.In;
 import org.terasology.rendering.assets.animation.MeshAnimation;
@@ -98,6 +99,8 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
         skeletalMeshComponent.material = assetManager.getAsset(urnBuilder.toString(), Material.class).get();
         entityBuilder.saveComponent(skeletalMeshComponent);
         event.consume();
+
+        setRemotePlayerMountPoint(characterEntity);
     }
 
     @ReceiveEvent
@@ -215,6 +218,14 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
         skeletalMeshComponent.animationPool.addAll(wantedAnimationPool);
         skeletalMeshComponent.loop = true;
         visualCharacter.saveComponent(skeletalMeshComponent);
+    }
+
+    private void setRemotePlayerMountPoint(EntityRef characterEntity) {
+        //TODO read from prefab
+        RemotePersonHeldItemMountPointComponent characterMountPoint = characterEntity.getComponent(RemotePersonHeldItemMountPointComponent.class);
+        if ( characterMountPoint != null ){
+            characterMountPoint.translate.set(-0.18f,0.26f,0.25f);
+        }
     }
 
 }
