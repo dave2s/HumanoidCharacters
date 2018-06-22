@@ -59,6 +59,7 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
 
     public static final String CONFIG_SCREEN = "CharacterAppearanceScreen";
     private static final float MIN_SPEED_IN_M_PER_S_FOR_WALK_ANIMATION = 1.0f;
+    private static final int RIGHT_HAND_THUMB_1 = 23;
     @In
     private AssetManager assetManager;
 
@@ -100,7 +101,7 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
         entityBuilder.saveComponent(skeletalMeshComponent);
         event.consume();
 
-        setRemotePlayerMountPoint(characterEntity);
+        overrideRemotePlayerMountPoint(characterEntity);
     }
 
     @ReceiveEvent
@@ -162,7 +163,7 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
     public void update(float delta) {
         for (EntityRef characterEntity: entityManager.getEntitiesWith(CharacterAppearanceComponent.class)) {
             updateVisualForCharacterEntity(characterEntity, delta);
-
+            animateRemotePlayerMountPoint(characterEntity, delta);
         }
     }
     @ReceiveEvent
@@ -220,12 +221,33 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
         visualCharacter.saveComponent(skeletalMeshComponent);
     }
 
-    private void setRemotePlayerMountPoint(EntityRef characterEntity) {
+    private void overrideRemotePlayerMountPoint(EntityRef characterEntity) {
         //TODO read from prefab
         RemotePersonHeldItemMountPointComponent characterMountPoint = characterEntity.getComponent(RemotePersonHeldItemMountPointComponent.class);
+
         if ( characterMountPoint != null ){
             characterMountPoint.translate.set(-0.18f,0.26f,0.25f);
         }
+    }
+
+    private void animateRemotePlayerMountPoint(EntityRef characterEntity, float delta){
+        RemotePersonHeldItemMountPointComponent characterMountPoint = characterEntity.getComponent(RemotePersonHeldItemMountPointComponent.class);
+        if ( characterMountPoint == null ){
+            return;
+        }
+
+        LocationComponent locationComponent = characterMountPoint.mountPointEntity.getComponent(LocationComponent.class);
+
+        SkeletalMeshComponent skeletalMeshComp = characterEntity.getComponent(SkeletalMeshComponent.class);
+
+        //calc actual frame
+        int currentFrame = (int) (skeletalMeshComp.animationTime / skeletalMeshComp.animation.getTimePerFrame());
+        Vector3f offset = skeletalMeshComp.animation.getFrame(currentFrame).getPosition(RIGHT_HAND_THUMB_1);
+
+        offset.add(characterMountPoint.translate);
+        locationComponent.setLocalPosition(offset);
+
+        characterMountPoint.mountPointEntity.saveComponent(locationComponent);
     }
 
 }
