@@ -163,7 +163,9 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
     public void update(float delta) {
         for (EntityRef characterEntity: entityManager.getEntitiesWith(CharacterAppearanceComponent.class)) {
             updateVisualForCharacterEntity(characterEntity, delta);
-            animateRemotePlayerMountPoint(characterEntity, delta);
+            if (!localPlayer.equals(characterEntity)) {
+                animateRemotePlayerMountPoint(characterEntity, delta);
+            }
         }
     }
     @ReceiveEvent
@@ -237,14 +239,28 @@ public class CharacterAppearanceClientSystem extends BaseComponentSystem impleme
         }
 
         LocationComponent locationComponent = characterMountPoint.mountPointEntity.getComponent(LocationComponent.class);
+        if ( locationComponent == null ){
+            return;
+        }
 
-        SkeletalMeshComponent skeletalMeshComp = characterEntity.getComponent(SkeletalMeshComponent.class);
+        //get visualcharacter of character entity
+        VisualCharacterComponent visualCharacterComponent = characterEntity.getComponent(VisualCharacterComponent.class);
+        if (visualCharacterComponent == null) {
+            return;
+        }
 
+        SkeletalMeshComponent skeletalMeshComp = visualCharacterComponent.visualCharacter.getComponent(SkeletalMeshComponent.class);
+        if ( skeletalMeshComp == null ){
+            return;
+        }
+        if ( skeletalMeshComp.animation == null ){
+            return;
+        }
         //calc actual frame
         int currentFrame = (int) (skeletalMeshComp.animationTime / skeletalMeshComp.animation.getTimePerFrame());
         Vector3f offset = skeletalMeshComp.animation.getFrame(currentFrame).getPosition(RIGHT_HAND_THUMB_1);
 
-        offset.add(characterMountPoint.translate);
+        //offset.add(characterMountPoint.translate);
         locationComponent.setLocalPosition(offset);
 
         characterMountPoint.mountPointEntity.saveComponent(locationComponent);
